@@ -1,0 +1,37 @@
+/* The character's position is its feet, never the top-left of the sprite. */
+.explorer {
+  left: 10%;
+  top: 90.5%;
+  width: 5%;
+  transform: translate(-50%, -93%);
+  transition: none;
+}
+.explorer > svg {
+  animation: none;
+  transform: scaleX(var(--facing, 1));
+}
+.explorer.walking > svg {
+  animation: walk-body 240ms steps(2, end) infinite;
+}
+.explorer.walking .explorer-leg {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: walk-leg 240ms steps(2, end) infinite;
+}
+.explorer.walking .leg-right { animation-delay: -120ms; }
+.explorer.walking .explorer-label { background: #3b7761; }
+.map-hint { max-width: 94%; }
+.map-hint-text { overflow: hidden; text-overflow: ellipsis; }
+.progress-track > div { width: 0; }
+@keyframes walk-body {
+  0%, 100% { transform: scaleX(var(--facing, 1)) translateY(0); }
+  50% { transform: scaleX(var(--facing, 1)) translateY(-2px); }
+}
+@keyframes walk-leg {
+  0%, 100% { transform: rotate(-13deg) translateY(-1px); }
+  50% { transform: rotate(13deg) translateY(1px); }
+}
+@media (max-width: 540px) { .explorer { width: 6%; } }
+@media (prefers-reduced-motion: reduce) {
+  .explorer.walking > svg, .explorer.walking .explorer-leg { animation: none; }
+}

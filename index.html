@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#252437" />
+  <title>El desierto del conocimiento · ELearningPlatform</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="journey.css" />
+  <link rel="stylesheet" href="worlds.css" />
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="icon-heart" viewBox="0 0 24 24"><path d="M3 3h6v3h6V3h6v3h3v9h-3v3h-3v3h-3v3H9v-3H6v-3H3v-3H0V6h3z" fill="currentColor"/><path d="M3 6h6v3H6v3H3z" fill="#fff" opacity=".5"/></symbol>
+    <symbol id="icon-bolt" viewBox="0 0 24 24"><path d="M12 0h9l-6 9h6L6 24l3-12H3z" fill="currentColor"/></symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24"><path d="M9 0h6v6h3v3h6v6h-6v3h3v6h-6v-3H9v3H3v-6h3v-3H0V9h6V6h3z" fill="currentColor"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><path d="M6 0h12v3h3v9h3v12H0V12h3V3h3zm3 3v9h6V3zm0 12v6h6v-6z" fill="currentColor"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m3 12 5 5L21 4l3 3L8 23 0 15z" fill="currentColor"/></symbol>
+    <symbol id="icon-book" viewBox="0 0 28 28"><path d="M1 3h10v3h6V3h10v21H17v3h-6v-3H1z" fill="currentColor"/><path d="M5 7h5v13H5zm13 0h5v13h-5z" fill="#252437"/></symbol>
+  </defs></svg>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="ELearningPlatform, inicio"><span class="brand-mark"><svg><use href="#icon-book"/></svg></span><span>ELearning<span class="brand-light">Platform</span><small>APRENDER ES UNA AVENTURA</small></span></a>
+    <div class="hud" aria-label="Estadísticas del jugador">
+      <div class="hud-stat life-stat"><span class="hud-label">TUS VIDAS</span><div id="hearts" class="hearts"></div></div>
+      <div class="hud-stat streak-stat"><svg class="bolt"><use href="#icon-bolt"/></svg><div><strong>7 <span>días</span></strong><span class="hud-label">EN RACHA</span></div></div>
+      <div class="xp-stat"><svg><use href="#icon-star"/></svg><strong id="xp-count">0</strong><span>XP</span></div>
+    </div>
+    <button class="profile" id="profile-button" aria-label="Ver perfil del explorador"><span class="mini-face">:)</span><span class="online-dot"></span></button>
+  </header>
+  <main>
+    <nav class="breadcrumbs" aria-label="Ubicación"><button id="course-button">← Mi curso</button><span>/</span><span>Introducción a la programación</span><span>/</span><strong>Unidad 01</strong></nav>
+    <nav id="unit-switcher" class="unit-switcher" aria-label="Unidades del curso"></nav>
+    <section class="unit-heading" aria-labelledby="unit-title">
+      <div class="unit-title-block"><div class="world-badge"><span>UNIDAD</span><strong>01</strong></div><div><div class="eyebrow">UN NUEVO MUNDO POR DESCUBRIR</div><h1 id="unit-title">El desierto del conocimiento<span>.</span></h1><p>Fundamentos de programación <span>·</span> Tu aventura comienza con las bases.</p></div></div>
+      <div class="unit-progress"><div><span>Tu progreso</span><strong><span id="progress-count">0</span> <span class="muted">/ 12 desafíos</span></strong></div><div class="progress-track" role="progressbar" aria-label="Progreso de la unidad" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0"><div id="progress-fill"></div></div><small id="progress-caption">Tu primer paso te está esperando.</small></div>
+    </section>
+    <div class="adventure-layout">
+      <section class="map-panel" aria-label="Mapa interactivo de la unidad">
+        <button id="exit-map" aria-label="Salir de pantalla completa" title="Salir de pantalla completa (Esc)">×</button>
+        <div class="map-toolbar"><div><span class="live-dot"></span><span>MUNDO 01</span><span class="toolbar-divider">/</span><span class="map-subtitle">TIERRAS DEL SOL</span></div><div class="map-tools"><button id="sound-button" aria-label="Activar efectos de sonido" aria-pressed="false" title="Activar efectos de sonido"><span id="sound-icon">♪</span><span class="sound-slash">╱</span></button><button id="expand-button" aria-label="Ampliar mapa" title="Ampliar mapa">⛶</button></div></div>
+        <div class="map-world" id="map-world">
+          <img class="world-image" src="mapa_desierto_sin_mario.png" alt="Mundo desértico en pixel art: un camino recorre oasis, pirámides, ruinas y tuberías hasta un castillo final." width="1448" height="1086" />
+          <div class="world-shade"></div>
+          <div id="map-nodes"></div>
+          <div id="world-effects" aria-hidden="true"></div>
+          <div id="explorer" class="explorer" aria-hidden="true"><span class="explorer-label">TÚ ESTÁS AQUÍ</span><svg viewBox="0 0 56 70"><ellipse cx="29" cy="65" rx="20" ry="5" fill="#4d342e" opacity=".28"/><g class="explorer-leg leg-left"><path d="M14 47h12v17H11v-7z" fill="#30263a"/><path d="M11 60h15v6H8v-3z" fill="#643624"/></g><g class="explorer-leg leg-right"><path d="M31 47h12v17H29V54z" fill="#30263a"/><path d="M29 60h15l4 6H29z" fill="#643624"/></g><path d="M12 31h32v22H12z" fill="#ed6841"/><path d="M34 31h10v22H34" fill="#b9462e"/><path d="M17 32h6v16h11V32h5v23H17" fill="#457e91"/><path d="M20 32h4v5h-4zm13 0h4v5h-4z" fill="#ffcf66"/><path d="M5 34h9v19H5zm38 0h8v19h-8" fill="#f3b979"/><path d="M13 9h29v23H13" fill="#f3b979"/><path d="M34 9h8v23h-8" fill="#d18a58"/><path d="M12 12h6v16h-6zm2-6h28v7H14" fill="#593628"/><path d="M8 11h40v8H8zm8-9h23v13H16" fill="#55aca0"/><path d="M32 2h7v13h-7" fill="#287e78"/><path d="M18 3h13v3H18" fill="#8bd2b5"/><path d="M24 21h4v5h-4zm12 0h4v5h-4" fill="#332c37"/><path d="M28 30h8v3h-8" fill="#a65439"/><path d="M7 51h7v5H7zm36 0h7v5h-7" fill="#f7cc92"/></svg></div>
+          <div class="map-hint"><span class="hint-cross">✥</span> <span class="map-hint-text">Comienza tu aventura: salida → desafío 1</span></div>
+        </div>
+        <div class="map-legend" aria-label="Leyenda del mapa"><span><i class="legend-dot completed">✓</i>Completado</span><span><i class="legend-dot available"></i>Disponible</span><span><i class="legend-dot locked"><svg><use href="#icon-lock"/></svg></i>Bloqueado</span><span><i class="legend-dot bonus">★</i>Bonus</span><span><i class="legend-dot recovery">♥</i>Recuperar vida</span></div>
+      </section>
+      <aside class="detail-column" aria-label="Detalle del desafío">
+        <section class="collection-card" aria-label="Colección de la unidad"><span id="collection-icon" class="collectible coin" aria-hidden="true"></span><div><span id="collection-label">Monedas</span><strong id="collection-count">0 / 10</strong><small id="collection-note"></small></div></section>
+        <section class="challenge-card" id="challenge-card" aria-live="polite"></section>
+        <section class="tip-card"><div class="tip-heading"><span class="question-block">?</span><strong>UN PEQUEÑO IMPULSO</strong></div><p>¿Te quedaste sin vidas? Busca las <strong>tuberías con corazón</strong> y completa un desafío para recuperar una.</p><button id="find-life">Encontrar una vida <span>→</span></button></section>
+        <div class="save-status"><span></span> Tu aventura se guarda automáticamente</div>
+      </aside>
+    </div>
+    <footer class="page-footer"><span><svg><use href="#icon-book"/></svg> PEQUEÑOS PASOS. GRANDES CONQUISTAS.</span><span>Explora. Aprende. Sube de nivel. <span class="footer-star">✦</span></span></footer>
+  </main>
+  <dialog id="activity-dialog"><button class="dialog-close" aria-label="Cerrar actividad">×</button><div id="activity-content"></div></dialog>
+  <dialog id="info-dialog"><button class="dialog-close" aria-label="Cerrar">×</button><div id="info-content"></div></dialog>
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>
+
