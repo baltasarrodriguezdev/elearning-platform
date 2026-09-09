@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "node server.mjs", "start": "node server.mjs", "check": "node --check app.js && node --check journey.js && node --check worlds.js && node --check server.mjs", "test": "node journey.test.js" }
+  "scripts": { "dev": "node server.mjs", "start": "node server.mjs", "check": "node --check app.js && node --check node-art.js && node --check journey.js && node --check worlds.js && node --check server.mjs", "test": "node journey.test.js" }
 }

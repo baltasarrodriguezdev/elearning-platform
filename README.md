@@ -21,6 +21,9 @@ La unidad 1 tiene 10 desafíos principales, bonus y recuperación (12 en total).
 - Recorrido estricto: salida → 1 → 2 → … → objetivo final. Los puntos intermedios siguen curvas, puentes y escaleras de cada mapa.
 - Al completar una actividad y cerrar su resultado, el personaje camina al siguiente desafío. Durante el desplazamiento no se pueden iniciar otras actividades.
 - Seleccionar un nodo distante muestra su detalle; no teletransporta al personaje ni permite saltarse ejercicios.
+- Cada desafío es un objeto SVG interactivo: bloques sorpresa y bandera final en Mario, barriles en Donkey Kong y portales de piedra en Castlevania. Los bonus son una estrella, bananas o un cristal; la recuperación tiene tubería, barril con corazón o poción según el mundo.
+- Al tocar un objeto, reacciona y abre una tarjeta anclada al mapa para entrar a su actividad. Los objetos cerrados sacuden sus cadenas y muestran el requisito de avance. Los resueltos cambian de aspecto; los números quedan como pequeñas etiquetas secundarias.
+- Una guía luminosa acompaña el tramo del recorrido y el explorador deja partículas al caminar. Cada mundo tiene efectos ambientales discretos. El objeto actual se eleva para mantener visible al personaje.
 - Bonus y recuperación mantienen al personaje en su posición del recorrido principal.
 - Cada desafío principal y bonus otorga un coleccionable una sola vez. Golpear el bloque/barril o encender la vela es una interacción visual; no permite obtener recompensas sin completar una actividad.
 - Una respuesta incorrecta resta una vida por apertura de actividad. Recuperación y repaso no consumen vidas.
@@ -32,7 +35,7 @@ La unidad 1 tiene 10 desafíos principales, bonus y recuperación (12 en total).
 
 El botón de ampliar usa requestFullscreen() con el mapa como elemento de pantalla completa. Oculta HUD, título, selector, leyenda y panel lateral. Se ve la ilustración completa conservando su proporción 4:3, sin recortar ni deformar; las pantallas de otra proporción muestran bandas negras. Escape o la cruz permiten salir.
 
-Si el navegador incrustado bloquea la API, la alternativa ocupa toda su área disponible. Seleccionar el desafío actual en pantalla completa sale de esa vista para abrir la actividad; seleccionar el siguiente punto disponible inicia la caminata dentro del mapa.
+Si el navegador incrustado bloquea la API, la alternativa ocupa toda su área disponible. Tocar un objeto abre su tarjeta dentro del mapa. Su botón de entrada sale de pantalla completa para abrir la actividad; «Caminar hasta aquí» inicia el siguiente tramo disponible dentro del mapa.
 
 ## Archivos y verificaciones
 
@@ -40,6 +43,8 @@ Si el navegador incrustado bloquea la API, la alternativa ocupa toda su área di
 - styles.css: interfaz base y diseño adaptable.
 - journey.css: posición del explorador y animación de sus pasos.
 - worlds.css: identidad de cada unidad, coleccionables y pantalla completa.
+- node-art.js: objetos SVG originales de cada mundo y sus estados.
+- world-play.css: interacción de objetos, tarjetas ancladas, atmósfera y guía del camino.
 - app.js: selección, actividades, recompensas, guardado y pantalla completa.
 - journey.js: interpolación de rutas y reglas de avance consecutivo.
 - worlds.js: rutas, títulos, preguntas y configuración de las tres unidades.
@@ -55,6 +60,7 @@ Se conservan las referencias imagen_referencia.png, DonkeyKong_mapa.png y Castle
 Assets finales y especificaciones de edición utilizadas:
 
 - mapa_desierto_sin_mario.png: retirar a Mario junto a START y los antiguos marcadores 7, 8 y 9; reconstruir arena y caminos conservando estilo, paisaje y composición. Los nodos 7–9 se reubicaron sobre el camino hacia el castillo.
+- mapa_desierto_objetos.png: segunda edición del desierto, actualmente utilizada. Retirar los círculos restantes 1–6 y 10 y la estrella morada dibujada; reconstruir caminos y arena sin cambiar el paisaje ni su composición. Todos los desafíos pasan a ser objetos interactivos superpuestos.
 - mapa_selva_unidad.png: retirar al gorila junto a START y todas las banderas numeradas y círculos del camino; reconstruir los fondos y conservar selva, cascadas, puentes, escaleras, edificios, barriles, bananas, START y GOAL. Los marcadores ahora son controles HTML. Se añadió el desafío 6 que faltaba en la referencia.
 - mapa_castillo_unidad.png: retirar los doce carteles de nombres/números y sus círculos rojos; reconstruir fondos y añadir escaleras de piedra entre cementerio → aldea y puente → capilla para caminar de forma continua. Conservar luna, fortaleza, edificios, paleta, START y GOAL. Las coordenadas de las rutas se ajustaron al resultado.
 

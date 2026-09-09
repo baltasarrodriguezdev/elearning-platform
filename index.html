@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="journey.css" />
   <link rel="stylesheet" href="worlds.css" />
+  <link rel="stylesheet" href="world-play.css" />
   <script type="module" src="app.js"></script>
 </head>
 <body>
@@ -40,9 +41,13 @@
         <button id="exit-map" aria-label="Salir de pantalla completa" title="Salir de pantalla completa (Esc)">×</button>
         <div class="map-toolbar"><div><span class="live-dot"></span><span>MUNDO 01</span><span class="toolbar-divider">/</span><span class="map-subtitle">TIERRAS DEL SOL</span></div><div class="map-tools"><button id="sound-button" aria-label="Activar efectos de sonido" aria-pressed="false" title="Activar efectos de sonido"><span id="sound-icon">♪</span><span class="sound-slash">╱</span></button><button id="expand-button" aria-label="Ampliar mapa" title="Ampliar mapa">⛶</button></div></div>
         <div class="map-world" id="map-world">
-          <img class="world-image" src="mapa_desierto_sin_mario.png" alt="Mundo desértico en pixel art: un camino recorre oasis, pirámides, ruinas y tuberías hasta un castillo final." width="1448" height="1086" />
+          <img class="world-image" src="mapa_desierto_objetos.png" alt="Mundo desértico en pixel art: un camino recorre oasis, pirámides, ruinas y tuberías hasta un castillo final." width="1448" height="1086" />
           <div class="world-shade"></div>
+          <div id="world-atmosphere" class="world-atmosphere" aria-hidden="true"></div>
+          <svg id="route-layer" class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div id="map-nodes"></div>
+          <div id="walk-effects" aria-hidden="true"></div>
+          <section id="encounter" class="encounter" aria-label="Desafío seleccionado en el mapa" hidden></section>
           <div id="world-effects" aria-hidden="true"></div>
           <div id="explorer" class="explorer" aria-hidden="true"><span class="explorer-label">TÚ ESTÁS AQUÍ</span><svg viewBox="0 0 56 70"><ellipse cx="29" cy="65" rx="20" ry="5" fill="#4d342e" opacity=".28"/><g class="explorer-leg leg-left"><path d="M14 47h12v17H11v-7z" fill="#30263a"/><path d="M11 60h15v6H8v-3z" fill="#643624"/></g><g class="explorer-leg leg-right"><path d="M31 47h12v17H29V54z" fill="#30263a"/><path d="M29 60h15l4 6H29z" fill="#643624"/></g><path d="M12 31h32v22H12z" fill="#ed6841"/><path d="M34 31h10v22H34" fill="#b9462e"/><path d="M17 32h6v16h11V32h5v23H17" fill="#457e91"/><path d="M20 32h4v5h-4zm13 0h4v5h-4z" fill="#ffcf66"/><path d="M5 34h9v19H5zm38 0h8v19h-8" fill="#f3b979"/><path d="M13 9h29v23H13" fill="#f3b979"/><path d="M34 9h8v23h-8" fill="#d18a58"/><path d="M12 12h6v16h-6zm2-6h28v7H14" fill="#593628"/><path d="M8 11h40v8H8zm8-9h23v13H16" fill="#55aca0"/><path d="M32 2h7v13h-7" fill="#287e78"/><path d="M18 3h13v3H18" fill="#8bd2b5"/><path d="M24 21h4v5h-4zm12 0h4v5h-4" fill="#332c37"/><path d="M28 30h8v3h-8" fill="#a65439"/><path d="M7 51h7v5H7zm36 0h7v5h-7" fill="#f7cc92"/></svg></div>
           <div class="map-hint"><span class="hint-cross">✥</span> <span class="map-hint-text">Comienza tu aventura: salida → desafío 1</span></div>

@@ -47,7 +47,7 @@ const q = (text, answers, correct, explanation) => [text, answers, correct, expl
 export const UNITS = {
   1: {
     id:1, theme:'desert', title:'El desierto del conocimiento', subtitle:'Fundamentos de programación', tagline:'Tu aventura comienza con las bases.', region:'TIERRAS DEL SOL', inspiration:'MARIO',
-    image:'mapa_desierto_sin_mario.png', alt:'Mapa pixel art del desierto con pirámides, tuberías y un camino hasta el castillo.',
+    image:'mapa_desierto_objetos.png', alt:'Mapa pixel art del desierto con pirámides, tuberías y un camino hasta el castillo.',
     stops:STOPS, roads:ROADS, mainCount:10, storageKey:'elp-desert-linear-v2',
     collectible:'Monedas', collectibleSingular:'moneda', symbol:'?', collectibleClass:'coin', rewardTitle:'¡MONEDA CONSEGUIDA!',
     feature:'Golpea el bloque, descubre tu recompensa.', finish:'¡Bandera arriba! El castillo es tuyo.',

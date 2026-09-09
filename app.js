@@ -1,5 +1,6 @@
 import { nextChallenge as nextInJourney, canAdvance as canAdvanceJourney, measureRoute, pointOnRoute } from './journey.js';
 import { UNITS } from './worlds.js';
+import { nodeArt, nodeVerb } from './node-art.js';
 const unit = UNITS[Number(new URLSearchParams(location.search).get('unit'))] || UNITS[1];
 const { stops: STOPS, roads: ROADS, mainCount } = unit;
 const nextChallenge = completed => nextInJourney(completed, mainCount);
@@ -59,7 +60,67 @@ function applyUnit() {
   $('.tip-card p').textContent = unit.tip;
   $('.tip-heading .question-block').textContent = unit.symbol;
   $('#unit-switcher').innerHTML = Object.values(UNITS).map(world => `<a class="unit-link ${world.id === unit.id ? 'active' : ''}" href="?unit=${world.id}" ${world.id === unit.id ? 'aria-current="page"' : ''}><img src="${world.image}" alt=""/><span><small>UNIDAD ${String(world.id).padStart(2,'0')} · ${world.inspiration}</small><strong>${world.title}</strong></span><span class="unit-link-arrow">↗</span></a>`).join('');
+  const motePositions = [[18,22],[35,55],[51,17],[69,38],[82,72],[30,80],[58,68],[91,44]];
+  $('#world-atmosphere').innerHTML = motePositions.map(([x,y],i) => `<i class="world-mote" style="--mx:${x}%;--my:${y}%;--md:${4+i%3}s;--delay:-${i*.8}s"></i>`).join('') + (unit.theme === 'castle' ? Array.from({length:3},()=>'<span class="world-bat"><svg viewBox="0 0 32 20"><path d="M0 2 9 6 12 0l4 7 4-7 3 6 9-4-4 13-6-4-6 9-6-9-6 4z" fill="currentColor"/></svg></span>').join('') : '');
+  $('.map-legend').innerHTML = ['completed','available','locked','bonus','recovery'].map((status,i) => `<span><i class="legend-object" aria-hidden="true">${nodeArt(unit.theme,{id:1,optional:status==='bonus',recovery:status==='recovery'},status,mainCount)}</i>${['Resuelto','Disponible','Bloqueado','Bonus','Recuperar vida'][i]}</span>`).join('');
 }
+
+function closeEncounter() {
+  $('#encounter').hidden = true;
+  $('#map-world').classList.remove('encounter-open');
+}
+function reactNode(id, reaction='hit') {
+  const node = $(`[data-id="${id}"]`);
+  if (!node) return;
+  node.classList.add(reaction);
+  setTimeout(() => node.classList.remove(reaction), 600);
+}
+function drawRoute() {
+  const destination = moving ? state.position + 1 : Math.max(1,state.position);
+  const d = ROADS[destination].map(([x,y],i) => `${i?'L':'M'}${x},${y}`).join(' ');
+  $('#route-layer').innerHTML = `<path class="route-bed" d="${d}"/><path class="route-light" d="${d}"/>`;
+  $('#route-layer').classList.toggle('is-walking',moving);
+}
+function leaveFootstep(point) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const puff = document.createElement('i');
+  puff.className = 'walk-puff';
+  puff.style.left = `${point[0]}%`; puff.style.top = `${point[1]}%`;
+  $('#walk-effects').append(puff);
+  setTimeout(() => puff.remove(),700);
+}
+function showEncounter(c, focus=false) {
+  const status = getStatus(c);
+  const past = !c.optional && c.id < state.position;
+  const locked = isLocked(c);
+  const walkingNext = !c.optional && c.id === state.position + 1 && canAdvance(state.position,state.completed);
+  const action = locked ? `Completa el desafío ${c.id - 1}` : past ? 'Desafío completado' : walkingNext ? 'Caminar hasta aquí →' : c.recovery ? 'Recuperar una vida →' : c.optional ? 'Jugar bonus →' : 'Entrar al desafío →';
+  const panel = $('#encounter');
+  panel.innerHTML = `<button class="encounter-close" aria-label="Cerrar detalle del mapa">×</button><span class="encounter-kicker">${statusLabels[status].toUpperCase()} · DESAFÍO ${String(c.id).padStart(2,'0')}</span><h3>${c.title}</h3><div class="encounter-meta">${c.type} · ${c.minutes} min · +${c.xp} XP</div><button class="encounter-action" ${locked||past?'disabled':''}>${action}</button>`;
+  panel.style.setProperty('--encounter-x',`${c.x}%`);
+  panel.hidden = false;
+  const mapHeight = $('#map-world').clientHeight;
+  const nodeTop = c.y / 100 * mapHeight;
+  const aboveTop = nodeTop - mapHeight*.09 - panel.offsetHeight;
+  const below = aboveTop < 8;
+  const preferredTop = below ? nodeTop + mapHeight*.05 : aboveTop;
+  panel.classList.toggle('below',below);
+  panel.style.top = `${Math.max(8,Math.min(mapHeight-panel.offsetHeight-8,preferredTop))}px`;
+  panel.style.translate = '-50% 0';
+  $('#map-world').classList.add('encounter-open');
+  $('.encounter-close').addEventListener('click', () => { closeEncounter(); $(`[data-id="${c.id}"]`).focus({preventScroll:true}); });
+  $('.encounter-action').addEventListener('click', async () => {
+    closeEncounter();
+    if (walkingNext) return advanceExplorer();
+    if ($('.map-panel').classList.contains('expanded')) await leaveMap();
+    startActivity(c);
+  });
+  if (focus) (locked||past ? $('.encounter-close') : $('.encounter-action')).focus({preventScroll:true});
+}
+$('#map-world').addEventListener('click', event => {
+  if (!event.target.closest('.map-node, .encounter')) closeEncounter();
+});
+window.addEventListener('resize', closeEncounter);
 
 function rewardEffect(c) {
   const effect = document.createElement('span');
@@ -103,6 +164,7 @@ function placeExplorer(point) {
 
 async function advanceExplorer() {
   if (moving || !canAdvance(state.position, state.completed)) return;
+  closeEncounter();
   const destination = state.position + 1;
   moving = true;
   selected = destination;
@@ -120,6 +182,7 @@ async function advanceExplorer() {
   await new Promise(resolve => {
     let elapsed = 0;
     let previousTime;
+    let lastFootstep = -200;
     function step(time) {
       if (previousTime !== undefined) elapsed += Math.min(64, time - previousTime);
       previousTime = time;
@@ -128,6 +191,7 @@ async function advanceExplorer() {
       const dx = point[0] - avatarPoint[0];
       if (Math.abs(dx) > .001) $('#explorer').style.setProperty('--facing', dx < 0 ? -1 : 1);
       placeExplorer(point);
+      if (elapsed-lastFootstep > 180) { leaveFootstep(point); lastFootstep=elapsed; }
       if (progress < 1) requestAnimationFrame(step); else resolve();
     }
     requestAnimationFrame(step);
@@ -138,10 +202,15 @@ async function advanceExplorer() {
   delete $('#explorer').dataset.destination;
   persist();
   render();
+  $('#explorer').classList.add('arrived');
+  setTimeout(() => $('#explorer').classList.remove('arrived'),550);
+  reactNode(destination,'arrival');
+  if (!$('.map-panel').classList.contains('expanded')) showEncounter(challenges.find(c=>c.id===destination));
   toast(`Llegaste al desafío ${destination}. ¡Ya puedes iniciarlo!`);
 }
 
 function render() {
+  closeEncounter();
   $('#hearts').innerHTML = Array.from({ length: 5 }, (_, i) => icon('heart', i < state.lives ? '' : 'empty')).join('');
   $('#hearts').setAttribute('aria-label', `${state.lives} de 5 vidas`);
   $('#xp-count').textContent = state.xp.toLocaleString('es-AR');
@@ -160,8 +229,8 @@ function render() {
   $('.sound-slash').hidden = state.sound;
   $('#map-nodes').innerHTML = challenges.map(c => {
     const status = getStatus(c);
-    const symbol = status === 'completed' ? icon('check') : c.recovery ? icon('heart') : c.optional ? (unit.id === 1 ? icon('star') : `<span class="node-prize ${unit.collectibleClass}" aria-hidden="true"></span>`) : c.id;
-    return `<button class="map-node ${status} ${selected === c.id ? 'selected' : ''}" style="--x:${c.x};--y:${c.y}" data-id="${c.id}" aria-label="Desafío ${c.id}: ${c.title}. ${statusLabels[status]}" aria-pressed="${selected === c.id}">${symbol}<span class="node-tooltip">${c.id}. ${c.title}</span></button>`;
+    const available = status==='available';
+    return `<button class="map-node ${status} ${!c.optional && c.id === state.position && !moving ? 'player-here' : ''} ${selected === c.id ? 'selected' : ''}" style="--x:${c.x};--y:${c.y}" data-id="${c.id}" aria-label="Desafío ${c.id}: ${c.title}. ${statusLabels[status]}" aria-pressed="${selected === c.id}" aria-controls="encounter"><span class="object-ground" aria-hidden="true"></span>${nodeArt(unit.theme,c,status,mainCount)}<span class="node-sign" aria-hidden="true">${c.recovery?'♥':c.optional?'★':String(c.id).padStart(2,'0')}</span>${available&&!moving?`<span class="node-invitation" aria-hidden="true">${nodeVerb(unit.theme,status)}</span>`:''}</button>`;
   }).join('');
   placeExplorer(avatarPoint);
   $('#explorer').dataset.position = state.position;
@@ -170,6 +239,7 @@ function render() {
     $('.map-hint-text').textContent = state.position === 0 ? 'Comienza tu aventura: salida → desafío 1' : 'Completa tu desafío para caminar al siguiente';
   }
   renderDetail();
+  drawRoute();
 }
 function renderDetail() {
   const c = challenges.find(c => c.id === selected);
@@ -199,18 +269,14 @@ $('#map-nodes').addEventListener('click', async event => {
   if (!node) return;
   if (moving) { toast('Tu explorador está caminando. Espera a que llegue.'); return; }
   selected = Number(node.dataset.id); playTone(); render();
-  if (selected === state.position + 1 && canAdvance(state.position, state.completed)) { advanceExplorer(); return; }
-  if ($('.map-panel').classList.contains('expanded')) {
-    const c = challenges.find(c => c.id === selected);
-    if (isLocked(c) || (!c.optional && c.id !== state.position)) { toast(`Desafío ${c.id}: sigue el recorrido en orden.`); return; }
-    await leaveMap(); startActivity(c); return;
-  }
-  $(`[data-id="${selected}"]`).focus({ preventScroll: true });
-  if (window.innerWidth <= 850) $('#challenge-card').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'nearest' });
+  const c = challenges.find(c=>c.id===selected);
+  reactNode(c.id,isLocked(c)?'denied':'hit');
+  showEncounter(c,true);
 });
 $('#find-life').addEventListener('click', () => { if (moving) return; selected = recoveryId; render(); $('#challenge-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('#start-challenge').focus({ preventScroll: true }); });
 $('#sound-button').addEventListener('click', () => { state.sound = !state.sound; persist(); render(); playTone(); });
 function setMapExpanded(expanded) {
+  closeEncounter();
   $('.map-panel').classList.toggle('expanded', expanded);
   document.body.classList.toggle('map-only', expanded);
   $('#expand-button').setAttribute('aria-label', expanded ? 'Reducir mapa' : 'Ampliar mapa');
@@ -238,7 +304,11 @@ async function toggleMap() {
 $('#expand-button').addEventListener('click', toggleMap);
 $('#exit-map').addEventListener('click', leaveMap);
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setMapExpanded(false); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('.map-panel').classList.contains('expanded')) leaveMap(); });
+document.addEventListener('keydown', event => {
+  if(event.key!=='Escape') return;
+  if(!$('#encounter').hidden) { closeEncounter(); $(`[data-id="${selected}"]`).focus({preventScroll:true}); }
+  else if($('.map-panel').classList.contains('expanded')) leaveMap();
+});
 document.querySelectorAll('dialog').forEach(dialog => {
   dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
@@ -259,6 +329,7 @@ const questions = {
 };
 function startActivity(c) {
   if (moving || isLocked(c) || (!c.optional && c.id !== state.position)) return;
+  closeEncounter();
   if (state.lives === 0 && !c.recovery && !state.completed.includes(c.id)) { toast('Necesitas una vida. Completa el desafío de recuperación.'); selected = recoveryId; render(); return; }
   const [question, options, correct, explanation] = (unit.questions || questions)[c.id];
   let answer = null;
