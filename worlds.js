@@ -1,4 +1,5 @@
 import { STOPS, ROADS } from './journey.js';
+import { desertChallenges, desertQuestions } from './desert-lessons.js';
 
 const jungleStops = [[10,89], [19,86.5], [36.6,84.4], [59.2,82.3], [91.2,74.2],
   [81,59], [63.3,54.7], [50,48.3], [29.6,39.2], [11.7,30.1], [27.5,21.5], [53.8,24], [89,28.7]];
@@ -47,6 +48,7 @@ const q = (text, answers, correct, explanation) => [text, answers, correct, expl
 export const UNITS = {
   1: {
     id:1, theme:'desert', title:'El desierto del conocimiento', subtitle:'Fundamentos de programación', tagline:'Tu aventura comienza con las bases.', region:'TIERRAS DEL SOL', inspiration:'MARIO',
+    challenges:desertChallenges,questions:desertQuestions,
     image:'mapa_desierto_objetos.png', alt:'Mapa pixel art del desierto con pirámides, tuberías y un camino hasta el castillo.',
     stops:STOPS, roads:ROADS, mainCount:10, storageKey:'elp-desert-linear-v2',
     collectible:'Monedas', collectibleSingular:'moneda', symbol:'?', collectibleClass:'coin', rewardTitle:'¡MONEDA CONSEGUIDA!',

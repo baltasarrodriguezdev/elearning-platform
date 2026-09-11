@@ -1,0 +1,28 @@
+export const desertChallenges = [
+  { id: 1, x: 16.45, y: 85.35, title: 'Tu primer paso', type: 'Teórico', difficulty: 'Inicial', minutes: 5, xp: 50, description: 'Descubre qué es programar y cómo dar instrucciones a una computadora.' },
+  { id: 2, x: 19.9, y: 61.55, title: 'Piensa como un explorador', type: 'Teórico', difficulty: 'Inicial', minutes: 6, xp: 75, description: 'Divide un problema en pequeños pasos para encontrar una solución.' },
+  { id: 3, x: 11.4, y: 43.15, title: 'Un camino, un algoritmo', type: 'Práctico', difficulty: 'Inicial', minutes: 8, xp: 100, description: 'Ordena instrucciones y construye tu primer algoritmo.' },
+  { id: 4, x: 28.55, y: 20.7, title: 'Tesoros en variables', type: 'Teórico', difficulty: 'Inicial', minutes: 7, xp: 100, description: 'Aprende a guardar información y a darle un nombre a cada dato.' },
+  { id: 5, x: 49.4, y: 21.65, title: 'Cada dato en su lugar', type: 'Práctico', difficulty: 'Inicial', minutes: 8, xp: 100, description: 'Reconoce números, textos y valores lógicos en tu aventura.' },
+  { id: 6, x: 62.65, y: 29.65, title: 'Operaciones en el oasis', type: 'Práctico', difficulty: 'Intermedia', minutes: 10, xp: 125, description: 'Combina valores y resuelve expresiones para cruzar el oasis.' },
+  { id: 7, x: 36.1, y: 62.4, title: 'Preguntas con dos respuestas', type: 'Teórico', difficulty: 'Intermedia', minutes: 8, xp: 125, description: 'Explora las comparaciones y descubre el poder de verdadero y falso.' },
+  { id: 8, x: 64.2, y: 62.7, title: 'El poder de las decisiones', type: 'Práctico', difficulty: 'Intermedia', minutes: 10, xp: 150, description: 'No todos los caminos llevan al mismo lugar. Aprende a usar condicionales y elige tu próximo paso.' },
+  { id: 9, x: 80.25, y: 62.7, title: 'Repetir para avanzar', type: 'Práctico', difficulty: 'Intermedia', minutes: 12, xp: 175, description: 'Domina los bucles y repite acciones para llegar más lejos con menos instrucciones.' },
+  { id: 10, x: 93.55, y: 26.2, title: 'El castillo del conocimiento', type: 'Proyecto', difficulty: 'Avanzada', minutes: 20, xp: 300, description: 'Pon a prueba todo lo aprendido y abre las puertas del castillo con tu algoritmo final.' },
+  { id: 11, x: 25.1, y: 51.4, title: 'El tesoro escondido', type: 'Bonus', difficulty: 'Intermedia', minutes: 5, xp: 100, optional: true, description: 'Sal del camino principal y resuelve un acertijo lógico. ¡Hay XP extra esperando por ti!' },
+  { id: 12, x: 88.3, y: 69.5, title: 'Un corazón para seguir', type: 'Recuperación', difficulty: 'Inicial', minutes: 3, xp: 25, optional: true, recovery: true, description: 'Haz una pausa en la tubería de recuperación. Repasa lo aprendido y gana una vida para seguir explorando.' },
+];
+export const desertQuestions = {
+  1: ['¿Qué es un programa?', ['Una lista de instrucciones que una computadora puede ejecutar', 'Solo una imagen en la pantalla', 'Una pieza física de la computadora'], 0, 'Un programa es un conjunto de instrucciones que indica a la computadora qué hacer.'],
+  2: ['Para resolver un problema complejo, conviene…', ['Escribir código sin planificar', 'Dividirlo en problemas más pequeños', 'Evitar comprobar el resultado'], 1, 'Dividir un problema en partes pequeñas facilita entenderlo y resolverlo.'],
+  3: ['¿Qué caracteriza a un algoritmo?', ['Pasos ordenados para resolver un problema', 'Instrucciones elegidas al azar', 'Una única operación matemática'], 0, 'Un algoritmo define pasos ordenados y precisos para llegar a un resultado.'],
+  4: ['¿Para qué sirve una variable?', ['Para decorar un programa', 'Para almacenar un dato con un nombre', 'Para cerrar una aplicación'], 1, 'Una variable permite guardar un valor y utilizarlo mediante su nombre.'],
+  5: ['¿Cuál de estos valores es booleano?', ['"desierto"', '42', 'verdadero'], 2, 'Un booleano representa uno de dos valores: verdadero o falso.'],
+  6: ['Si tienes 3 monedas y consigues 4 más, ¿qué expresión calcula el total?', ['3 + 4', '3 > 4', '3 − 4'], 0, 'El operador + suma ambos valores. El total es 7 monedas.'],
+  7: ['¿Qué resultado tiene la comparación 5 > 3?', ['Falso', 'Verdadero', '5'], 1, '5 es mayor que 3, por lo tanto la comparación produce verdadero.'],
+  8: ['La puerta se abre si monedas ≥ 10. Tienes 12 monedas. ¿Qué sucede?', ['La puerta permanece cerrada', 'La puerta se abre', 'Pierdes todas tus monedas'], 1, '12 es mayor o igual que 10. La condición se cumple y se ejecuta la acción: abrir la puerta.'],
+  9: ['Debes recoger una moneda 5 veces. ¿Qué estructura te ayuda a repetir la acción?', ['Una variable de texto', 'Un comentario', 'Un bucle'], 2, 'Un bucle repite un conjunto de instrucciones; aquí, recoger una moneda cinco veces.'],
+  10: ['Tu algoritmo inicia con 0 monedas y suma 2 en cada una de 5 vueltas. Si el castillo abre con 10 monedas, ¿puedes entrar?', ['Sí, terminas con 10 monedas', 'No, terminas con 5 monedas', 'No, terminas con 2 monedas'], 0, 'El bucle suma 2 cinco veces: 2 × 5 = 10. La condición monedas ≥ 10 es verdadera. ¡El castillo se abre!'],
+  11: ['El camino sigue la secuencia 2, 4, 8, 16… ¿Qué número viene después?', ['18', '24', '32'], 2, 'Cada número es el doble del anterior: 16 × 2 = 32. ¡Encontraste el patrón!'],
+  12: ['Repaso rápido: ¿qué estructura permite elegir un camino según una condición?', ['Un condicional (si / si no)', 'Un color de fondo', 'Un comentario'], 0, 'Un condicional evalúa una condición y permite ejecutar instrucciones diferentes según el resultado.'],
+};

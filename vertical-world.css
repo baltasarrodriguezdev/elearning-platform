@@ -1,0 +1,83 @@
+/* One scrolling camera, one world. Its height follows the number of lessons. */
+.vertical-world main{max-width:none}
+.vertical-world .adventure-layout{grid-template-columns:minmax(0,1fr)}
+.vertical-world .detail-column{display:grid;grid-template-columns:minmax(180px,.7fr) minmax(300px,1.6fr) minmax(220px,1fr);align-items:start}
+.vertical-world .detail-column .save-status{grid-column:1/-1}
+.vertical-world .map-panel{position:relative;align-self:start}
+.vertical-world .map-world{width:100%;height:auto;max-width:none;min-height:0;margin:0 auto;background:var(--ground,#f6c25d) var(--terrain-image) repeat-y;background-size:100% auto;image-rendering:pixelated;overflow:hidden}
+.vertical-world .world-image,.vertical-world .world-shade,.vertical-world .map-hint{display:none}
+.vertical-world .map-viewport{height:clamp(470px,73vh,720px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#a57b40 #ebbd64;background:#382d23;position:relative;outline-offset:-4px}
+.vertical-terrain{position:absolute;inset:0;pointer-events:none;z-index:1}
+.vertical-terrain .vertical-road{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.vertical-road path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.vertical-road .road-shadow{stroke:#ae7336;stroke-width:77;opacity:.3;transform:translateY(5px)}
+.vertical-road .road-edge{stroke:#c48a40;stroke-width:72}
+.vertical-road .road-sand{stroke:#ffe5a0;stroke-width:64}
+.vertical-road .road-center{stroke:#fff0bd;stroke-width:44;opacity:.45}
+.vertical-road .support-road-edge{stroke:#b78445;stroke-width:24;opacity:.7}
+.vertical-road .support-road{stroke:#ffdf91;stroke-width:16;stroke-dasharray:12 8}
+.vertical-terrain .desert-scenery{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.trail-coin>g{animation:desert-coin-glow 2.8s ease-in-out infinite;animation-delay:var(--delay)}
+.desert-flower{animation:desert-flower-peek 4s ease-in-out infinite}
+.desert-cloud>g{animation:desert-cloud-drift 7s ease-in-out infinite}
+.support-sign{position:absolute;translate:-50% 0;padding:6px 8px;border:2px solid #8a743c;background:#fff3cf;color:#796025;font:8px var(--pixel);text-align:center;white-space:nowrap;box-shadow:2px 3px #76502d44}
+.support-sign small{display:block;font:11px var(--body);margin-top:4px}
+.support-sign.life-sign{background:#e5f0cf;border-color:#637c42;color:#3d6843}
+@keyframes desert-coin-glow{50%{transform:translateY(-4px);filter:brightness(1.15)}}
+@keyframes desert-flower-peek{50%{transform:translateY(8px)}}
+@keyframes desert-cloud-drift{50%{transform:translateX(10px)}}
+@media(prefers-reduced-motion:reduce){.trail-coin>g,.desert-flower,.desert-cloud>g{animation:none}}
+@media(max-width:700px){.support-sign{font-size:5px;padding:4px}.support-sign small{font-size:9px}}
+.vertical-castle{position:absolute;width:17.5%;left:41.25%;text-align:center}
+.vertical-castle svg{width:100%;height:auto;display:block;filter:drop-shadow(3px 5px 0 #89542744)}
+.vertical-castle>span{display:inline-block;margin-top:6px;padding:7px 10px;font:8px var(--pixel);color:#77512c;background:#fff1c9;border:2px solid #bf8a48;box-shadow:2px 3px #9b713755;white-space:nowrap}
+.vertical-start{position:absolute;left:50%;translate:-50% 0;text-align:center}
+.vertical-start>span{display:inline-block;background:#fff1bd;border:3px solid #734a2f;padding:9px 18px;color:#65502f;box-shadow:3px 3px #8f612f;font:18px var(--pixel)}
+.vertical-start>small{display:block;white-space:nowrap;font-size:12px;color:#765127;margin-top:10px}
+.ascent-milestone{position:absolute;left:10px;translate:0 -50%;padding:7px 8px;font:8px var(--pixel);background:#fce7afdd;border:1px solid #b98b44;color:#99723b}
+.ascent-milestone span{font-size:16px;vertical-align:middle;margin-right:6px}
+.vertical-navigation{padding:10px 12px;background:#f8efda;border-bottom:1px solid #c7b17e;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vertical-navigation>span{font:8px var(--pixel);color:#97713a}
+.vertical-navigation>div{display:flex;gap:6px}
+.vertical-navigation button{padding:7px 10px;font-size:12px;border:1px solid #c3ae7f;background:#fff9e9;color:#7e653b;box-shadow:0 2px #d1bc8b}
+.vertical-navigation button[aria-pressed=true]{background:#4a6147;color:#fff4cf;border-color:#304633;box-shadow:0 2px #304633}
+body.vertical-world[data-theme] .map-world .map-node{width:7.2%;min-width:44px;max-width:72px}
+.vertical-world .map-node .node-sign{font-size:9px;padding:4px 6px;min-width:23px}
+.vertical-world .explorer{width:5%;min-width:28px;max-width:50px}
+.vertical-world .node-invitation{font-size:7px}
+.vertical-world .map-node .object-ground{box-shadow:0 0 15px #fff1a4}
+.vertical-world .route-layer .route-light{stroke:#fff4ca;stroke-width:3px;stroke-dasharray:3 9}
+.vertical-world .map-legend{position:relative;z-index:2;background:#fff8e8}
+.vertical-world .map-panel.expanded{display:block}
+.vertical-world .map-panel.expanded .map-viewport{width:100%;height:100dvh;max-height:none;min-height:0;background:#271f19}
+.vertical-world .map-panel.expanded .map-world{width:100%;height:auto;max-width:none;flex:none}
+.vertical-world .map-panel.expanded .vertical-navigation{position:absolute;top:12px;left:12px;z-index:30;background:#fff4d7e8;border:1px solid #bfa67c;padding:6px;box-shadow:2px 3px #0004}
+.vertical-world .map-panel.expanded .vertical-direction{display:none}
+.vertical-world .map-panel.expanded .vertical-navigation button{padding:6px 9px}
+[data-theme=jungle].vertical-world{--ground:#638c3e}
+[data-theme=castle].vertical-world{--ground:#343f5c}
+[data-theme=jungle] .vertical-road .road-shadow{stroke:#213e26}
+[data-theme=jungle] .vertical-road .road-edge{stroke:#715438}
+[data-theme=jungle] .vertical-road .road-sand{stroke:#cdac6b}
+[data-theme=jungle] .vertical-road .road-center{stroke:#f0d495}
+[data-theme=jungle] .vertical-road .support-road-edge{stroke:#4e6332}
+[data-theme=jungle] .vertical-road .support-road{stroke:#b6c276}
+[data-theme=castle] .vertical-road .road-shadow{stroke:#0c152a}
+[data-theme=castle] .vertical-road .road-edge{stroke:#30334f}
+[data-theme=castle] .vertical-road .road-sand{stroke:#9393a9}
+[data-theme=castle] .vertical-road .road-center{stroke:#c3baca;stroke-dasharray:14 3;opacity:.55}
+[data-theme=castle] .vertical-road .support-road-edge{stroke:#534064}
+[data-theme=castle] .vertical-road .support-road{stroke:#a98eaa}
+[data-theme=castle] .vertical-navigation,[data-theme=castle].vertical-world .map-legend{background:#292538;color:#d0becb;border-color:#756078}
+[data-theme=castle] .vertical-navigation button{background:#393044;color:#ead9e3;border-color:#876779;box-shadow:0 2px #171723}
+[data-theme=castle] .unit-configuration{background:#e7dfe9;border-color:#c2b2c5}
+[data-theme=castle] .vertical-start>span,[data-theme=castle] .vertical-castle>span,[data-theme=castle] .ascent-milestone{background:#302b44;color:#d9c5d7;border-color:#8d6d85;box-shadow:2px 3px #15142655}
+[data-theme=castle] .vertical-start>small{color:#c2afc7}
+[data-theme=castle] .support-sign{background:#302b44;color:#e8bdd8;border-color:#987599}
+[data-theme=jungle] .vertical-navigation{background:#e6e9ce;border-color:#909d62}
+[data-theme=jungle] .vertical-start>span,[data-theme=jungle] .vertical-castle>span{background:#eddfae;border-color:#5d7140;color:#4d6339}
+.torch-flame{animation:torch-glow 2s ease-in-out infinite;transform-origin:center}
+@keyframes torch-glow{50%{opacity:.7;transform:translateY(3px)}}
+@media(prefers-reduced-motion:reduce){.torch-flame{animation:none}}
+@media(max-width:850px){.vertical-world .detail-column{grid-template-columns:1fr}.vertical-world .detail-column .save-status{grid-column:auto}}
+@media(max-width:700px){.vertical-navigation{flex-wrap:wrap;justify-content:center}.vertical-navigation>span{display:none}.vertical-world .map-viewport{height:65vh;min-height:390px;max-height:620px}.vertical-world .node-invitation{font-size:6px}.vertical-world .map-node .node-sign{font-size:7px;min-width:19px;padding:3px 4px}.vertical-castle>span{font-size:5px;padding:5px}.vertical-start>span{font-size:12px;padding:6px 12px}.vertical-start>small{font-size:10px;margin-top:7px}.ascent-milestone{font-size:5px;padding:4px;left:3px}.ascent-milestone span{font-size:11px;margin-right:3px}}

@@ -3,5 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "node server.mjs", "start": "node server.mjs", "check": "node --check app.js && node --check node-art.js && node --check journey.js && node --check worlds.js && node --check server.mjs", "test": "node journey.test.js" }
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "check": "node --check main.js && node --check app.js && node --check unit-routing.js && node --check unit-lessons.js && node --check desert-lessons.js && node --check world-appearance.js && node --check desert-scenery.js && node --check vertical-world.js && node --check node-art.js && node --check journey.js && node --check worlds.js && node --check server.mjs",
+    "test": "node journey.test.js && node vertical-world.test.js && node unit-routing.test.js"
+  }
 }

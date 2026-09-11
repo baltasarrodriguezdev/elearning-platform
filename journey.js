@@ -24,9 +24,9 @@ export function canAdvance(position, completed, count = 10) {
   return position >= 0 && position < count &&
     (position === 0 || Array.from({length:position}, (_, i) => i + 1).every(id => completed.includes(id)));
 }
-export function measureRoute(points) {
+export function measureRoute(points,width=1448,height=1086) {
   const lengths = points.slice(1).map((point, i) =>
-    Math.hypot((point[0] - points[i][0]) * 14.48, (point[1] - points[i][1]) * 10.86));
+    Math.hypot((point[0] - points[i][0]) * width/100, (point[1] - points[i][1]) * height/100));
   return { points, lengths, distance: lengths.reduce((sum, n) => sum + n, 0) };
 }
 export function pointOnRoute(route, fraction) {

@@ -1,0 +1,16 @@
+import { UNITS } from './worlds.js';
+import { WORLD_APPEARANCE } from './world-appearance.js';
+import { parseUnitEntry,unitUrl } from './unit-routing.js';
+const entry=parseUnitEntry(location.search),unit=UNITS[entry.id],appearance=WORLD_APPEARANCE[unit.theme];
+history.replaceState(null,'',unitUrl(entry.id,entry.count??undefined));
+if(entry.count){
+  await import('./app.js');
+}else{
+  document.body.dataset.theme=unit.theme;
+  document.body.classList.add('unit-setup');
+  document.title=`Configurar ${unit.title.toLowerCase()} · ELearningPlatform`;
+  document.querySelector('main').innerHTML=`<div class="setup-intro"><span class="eyebrow">TU CURSO · TRES MUNDOS PARA APRENDER</span><h1>Cada unidad, una aventura.</h1><p>Elige un mundo y define la cantidad de desafíos para construir su recorrido.</p></div><nav class="unit-switcher" aria-label="Unidades del curso">${Object.values(UNITS).map(u=>`<a class="unit-link ${u.id===unit.id?'active':''}" href="${unitUrl(u.id)}" ${u.id===unit.id?'aria-current="page"':''}><img src="${WORLD_APPEARANCE[u.theme].tile}" alt=""/><span><small>UNIDAD ${String(u.id).padStart(2,'0')} · ${u.inspiration}</small><strong>${u.title}</strong></span><span class="unit-link-arrow">↗</span></a>`).join('')}</nav><section class="setup-panel" aria-labelledby="setup-title"><div class="setup-world" style="background-image:url('${appearance.tile}')"><div class="setup-world-copy"><span>UNIDAD ${String(unit.id).padStart(2,'0')}</span><h2>${unit.title}</h2><p>${unit.subtitle}</p><div>${appearance.setting}</div></div></div><div class="setup-controls"><span class="eyebrow">CONFIGURA TU UNIDAD</span><h2 id="setup-title">¿Cuántos desafíos tendrá el recorrido?</h2><p>El mapa se adapta a la cantidad que elijas, con un camino continuo, un objetivo final y actividades de apoyo.</p><form id="setup-form"><label for="setup-count">Cantidad de desafíos principales</label><div class="setup-number"><input id="setup-count" name="count" type="number" min="1" max="120" step="1" required placeholder="Ej. 12" aria-describedby="setup-help"/><span>desafíos</span></div><small id="setup-help">Elige un número entero entre 1 y 120.</small><div class="setup-presets">${[12,24,36,60].map(n=>`<button type="button" data-count="${n}" aria-label="Elegir ${n} desafíos">${n}</button>`).join('')}</div>${entry.invalid?'<p class="setup-error" role="alert">La cantidad del enlace no es válida. Elige un número entre 1 y 120.</p>':''}<div class="setup-support"><span>★ Un desafío bonus</span><span>♥ ${appearance.support}</span></div><button class="primary-button" type="submit">Crear recorrido →</button></form><p class="setup-note">Mapa panorámico · HUD flotante · Progreso guardado</p></div></section>`;
+  document.querySelectorAll('[data-count]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#setup-count').value=button.dataset.count;document.querySelector('#setup-count').focus();}));
+  document.querySelector('#setup-form').addEventListener('submit',event=>{event.preventDefault();if(!event.currentTarget.reportValidity())return;const count=Number(document.querySelector('#setup-count').value);location.assign(unitUrl(unit.id,count));});
+}
+document.body.classList.remove('booting');

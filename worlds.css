@@ -41,6 +41,30 @@
 /* Native fullscreen plus an edge-to-edge fallback for embedded browsers.
    Preserve the entire 4:3 illustration: no crop, stretch, HUD or legend. */
 #exit-map { display:none; }
+.fullscreen-support{display:none}
+.map-panel.expanded .floating-map-hud,.vertical-world .floating-map-hud{display:block;position:absolute;top:110px;right:16px;z-index:31;width:332px;padding:14px 16px;background:#292738ed;color:#fff2d6;border:2px solid #aa8b5c;box-shadow:4px 4px #34271755;backdrop-filter:blur(5px)}
+.map-panel.expanded .floating-map-hud{top:16px;right:70px}
+.map-hud-heading{display:flex;justify-content:space-between;gap:10px;font:8px var(--pixel);color:#d6b887;padding-bottom:12px;border-bottom:1px solid #a88a5b4d}
+.hud-online{color:#a8c98f;font-size:6px}
+.map-hud-stats{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0}
+.map-hud-stats>div{display:flex;flex-direction:column;gap:7px}
+.map-hud-stats small{font:7px var(--pixel);color:#bdb1b8}
+.map-hud-stats strong{font:11px var(--pixel);color:#ffcf6c;white-space:nowrap}
+#map-life-count{display:flex;gap:3px}
+#map-life-count svg{width:16px;height:16px;color:#f78085;filter:drop-shadow(1px 2px #15131e)}
+#map-life-count svg.empty{color:#655362}
+.map-hud-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid #a88a5b4d;padding-top:11px}
+.map-hud-footer>span{font-size:11px;color:#d9c7ae}
+.fullscreen-support button{border:1px solid #315f3c;background:#4f7750;color:#fff6d3;padding:8px 12px;font-weight:700;font-size:12px}
+.activity-hud{display:flex;align-items:center;gap:16px;border-bottom:2px dashed #e2cfab;padding:0 20px 14px 0;margin-bottom:20px;font:10px var(--pixel)}
+.activity-hud>span{color:#b08250;margin-right:auto;font-size:8px}
+#activity-lives{color:#b34d57;white-space:nowrap}
+#activity-xp{color:#a16e30;white-space:nowrap}
+#activity-dialog{max-height:calc(100dvh - 32px)}
+.map-panel.expanded #activity-dialog::backdrop{background:#211b29b0;backdrop-filter:blur(2px)}
+.map-panel .toast{z-index:110}
+@media(max-width:500px){#activity-dialog{padding:28px 20px 22px}.activity-hud{gap:10px;padding-right:18px;font-size:9px}.fullscreen-support{max-width:calc(100% - 32px)}}
+@media(max-width:700px){.map-panel.expanded .floating-map-hud{top:auto;bottom:12px;right:12px}.vertical-world .floating-map-hud{width:290px;padding:10px}.map-hud-stats{gap:10px}.map-hud-heading{font-size:7px}}
 .map-panel.expanded,.map-panel:fullscreen {
   position:fixed; inset:0; width:100vw; height:100dvh; max-width:none; margin:0; padding:0;
   border:0; box-shadow:none; background:#08090d; display:flex; align-items:center; justify-content:center; overflow:hidden; z-index:100;

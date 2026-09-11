@@ -1,27 +1,18 @@
 import { nextChallenge as nextInJourney, canAdvance as canAdvanceJourney, measureRoute, pointOnRoute } from './journey.js';
 import { UNITS } from './worlds.js';
+import { WORLD_APPEARANCE } from './world-appearance.js';
 import { nodeArt, nodeVerb } from './node-art.js';
-const unit = UNITS[Number(new URLSearchParams(location.search).get('unit'))] || UNITS[1];
+import { makeVerticalUnit, renderVerticalTerrain } from './vertical-world.js';
+const params = new URLSearchParams(location.search);
+const baseUnit = UNITS[Number(params.get('unit'))] || UNITS[1];
+const unit = makeVerticalUnit(baseUnit,Number(params.get('count')));
+const chapterFor=id=>unit.chapterFor?unit.chapterFor(id):0;
 const { stops: STOPS, roads: ROADS, mainCount } = unit;
 const nextChallenge = completed => nextInJourney(completed, mainCount);
 const canAdvance = (position, completed) => canAdvanceJourney(position, completed, mainCount);
 const $ = (selector) => document.querySelector(selector);
 const icon = (name, className = '') => `<svg class="${className}" aria-hidden="true"><use href="#icon-${name}"/></svg>`;
-const desertChallenges = [
-  { id: 1, x: 16.45, y: 85.35, title: 'Tu primer paso', type: 'Teórico', difficulty: 'Inicial', minutes: 5, xp: 50, description: 'Descubre qué es programar y cómo dar instrucciones a una computadora.' },
-  { id: 2, x: 19.9, y: 61.55, title: 'Piensa como un explorador', type: 'Teórico', difficulty: 'Inicial', minutes: 6, xp: 75, description: 'Divide un problema en pequeños pasos para encontrar una solución.' },
-  { id: 3, x: 11.4, y: 43.15, title: 'Un camino, un algoritmo', type: 'Práctico', difficulty: 'Inicial', minutes: 8, xp: 100, description: 'Ordena instrucciones y construye tu primer algoritmo.' },
-  { id: 4, x: 28.55, y: 20.7, title: 'Tesoros en variables', type: 'Teórico', difficulty: 'Inicial', minutes: 7, xp: 100, description: 'Aprende a guardar información y a darle un nombre a cada dato.' },
-  { id: 5, x: 49.4, y: 21.65, title: 'Cada dato en su lugar', type: 'Práctico', difficulty: 'Inicial', minutes: 8, xp: 100, description: 'Reconoce números, textos y valores lógicos en tu aventura.' },
-  { id: 6, x: 62.65, y: 29.65, title: 'Operaciones en el oasis', type: 'Práctico', difficulty: 'Intermedia', minutes: 10, xp: 125, description: 'Combina valores y resuelve expresiones para cruzar el oasis.' },
-  { id: 7, x: 36.1, y: 62.4, title: 'Preguntas con dos respuestas', type: 'Teórico', difficulty: 'Intermedia', minutes: 8, xp: 125, description: 'Explora las comparaciones y descubre el poder de verdadero y falso.' },
-  { id: 8, x: 64.2, y: 62.7, title: 'El poder de las decisiones', type: 'Práctico', difficulty: 'Intermedia', minutes: 10, xp: 150, description: 'No todos los caminos llevan al mismo lugar. Aprende a usar condicionales y elige tu próximo paso.' },
-  { id: 9, x: 80.25, y: 62.7, title: 'Repetir para avanzar', type: 'Práctico', difficulty: 'Intermedia', minutes: 12, xp: 175, description: 'Domina los bucles y repite acciones para llegar más lejos con menos instrucciones.' },
-  { id: 10, x: 93.55, y: 26.2, title: 'El castillo del conocimiento', type: 'Proyecto', difficulty: 'Avanzada', minutes: 20, xp: 300, description: 'Pon a prueba todo lo aprendido y abre las puertas del castillo con tu algoritmo final.' },
-  { id: 11, x: 25.1, y: 51.4, title: 'El tesoro escondido', type: 'Bonus', difficulty: 'Intermedia', minutes: 5, xp: 100, optional: true, description: 'Sal del camino principal y resuelve un acertijo lógico. ¡Hay XP extra esperando por ti!' },
-  { id: 12, x: 88.3, y: 69.5, title: 'Un corazón para seguir', type: 'Recuperación', difficulty: 'Inicial', minutes: 3, xp: 25, optional: true, recovery: true, description: 'Haz una pausa en la tubería de recuperación. Repasa lo aprendido y gana una vida para seguir explorando.' },
-];
-const challenges = unit.challenges || desertChallenges;
+const challenges = unit.challenges;
 const totalChallenges = challenges.length;
 const recoveryId = challenges.find(c => c.recovery).id;
 challenges.filter(c => !c.optional).forEach(c => { [c.x, c.y] = STOPS[c.id]; });
@@ -40,15 +31,23 @@ try {
   }
 } catch { storageAvailable = false; }
 let selected = nextChallenge(state.completed);
+let visibleChapter = chapterFor(state.position);
+let overview=!!unit.segmented;
+let cameraFollowing=true;
 let moving = false;
 let avatarPoint = [...STOPS[state.position]];
 let toastTimer;
 let audioContext;
 function applyUnit() {
   document.body.dataset.theme = unit.theme;
+  document.body.classList.toggle('vertical-world',!!unit.vertical);
+  $('#unit-configuration').innerHTML=`<div><strong>UNIDAD CONFIGURADA</strong><span>${mainCount} desafíos principales · 1 bonus · 1 recuperación de vida</span></div><a href="?unit=${unit.id}">Cambiar cantidad</a>`;
   document.title = `${unit.title} · ELearningPlatform`;
   $('.world-image').src = unit.image;
+  $('#map-world').style.setProperty('--terrain-image',`url('${unit.tile}')`);
   $('.world-image').alt = unit.alt;
+  $('.map-hud-heading>span').textContent=`EXPLORADOR · U${String(unit.id).padStart(2,'0')}`;
+  if(unit.vertical) setupVerticalWorld();
   $('.breadcrumbs strong').textContent = `Unidad ${String(unit.id).padStart(2,'0')}`;
   $('.world-badge strong').textContent = String(unit.id).padStart(2,'0');
   $('#unit-title').innerHTML = `${unit.title}<span>.</span>`;
@@ -59,7 +58,7 @@ function applyUnit() {
   $('.progress-track').setAttribute('aria-valuemax', totalChallenges);
   $('.tip-card p').textContent = unit.tip;
   $('.tip-heading .question-block').textContent = unit.symbol;
-  $('#unit-switcher').innerHTML = Object.values(UNITS).map(world => `<a class="unit-link ${world.id === unit.id ? 'active' : ''}" href="?unit=${world.id}" ${world.id === unit.id ? 'aria-current="page"' : ''}><img src="${world.image}" alt=""/><span><small>UNIDAD ${String(world.id).padStart(2,'0')} · ${world.inspiration}</small><strong>${world.title}</strong></span><span class="unit-link-arrow">↗</span></a>`).join('');
+  $('#unit-switcher').innerHTML = Object.values(UNITS).map(world => `<a class="unit-link ${world.id === unit.id ? 'active' : ''}" href="?unit=${world.id}" ${world.id === unit.id ? 'aria-current="page"' : ''}><img src="${WORLD_APPEARANCE[world.theme].tile}" alt=""/><span><small>UNIDAD ${String(world.id).padStart(2,'0')} · ${world.inspiration}</small><strong>${world.title}</strong></span><span class="unit-link-arrow">↗</span></a>`).join('');
   const motePositions = [[18,22],[35,55],[51,17],[69,38],[82,72],[30,80],[58,68],[91,44]];
   $('#world-atmosphere').innerHTML = motePositions.map(([x,y],i) => `<i class="world-mote" style="--mx:${x}%;--my:${y}%;--md:${4+i%3}s;--delay:-${i*.8}s"></i>`).join('') + (unit.theme === 'castle' ? Array.from({length:3},()=>'<span class="world-bat"><svg viewBox="0 0 32 20"><path d="M0 2 9 6 12 0l4 7 4-7 3 6 9-4-4 13-6-4-6 9-6-9-6 4z" fill="currentColor"/></svg></span>').join('') : '');
   $('.map-legend').innerHTML = ['completed','available','locked','bonus','recovery'].map((status,i) => `<span><i class="legend-object" aria-hidden="true">${nodeArt(unit.theme,{id:1,optional:status==='bonus',recovery:status==='recovery'},status,mainCount)}</i>${['Resuelto','Disponible','Bloqueado','Bonus','Recuperar vida'][i]}</span>`).join('');
@@ -69,6 +68,72 @@ function closeEncounter() {
   $('#encounter').hidden = true;
   $('#map-world').classList.remove('encounter-open');
 }
+function focusCamera(point=avatarPoint,behavior='auto') {
+  if(!unit.vertical)return;
+  const viewport=$('#map-viewport'),world=$('#map-world');
+  const top=Math.max(0,Math.min(world.clientHeight-viewport.clientHeight,point[1]/100*world.clientHeight-viewport.clientHeight*.62));
+  viewport.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':behavior});
+}
+function setupVerticalWorld() {
+  const world=$('#map-world');
+  const viewport=document.createElement('div');
+  viewport.id='map-viewport';viewport.className='map-viewport';viewport.tabIndex=0;
+  viewport.setAttribute('role','region');viewport.setAttribute('aria-label','Mapa vertical. Desplázate hacia arriba para explorar el recorrido.');
+  world.before(viewport);viewport.append(world);
+  world.style.aspectRatio=`${unit.worldWidth} / ${unit.worldHeight}`;
+  world.style.setProperty('--world-height',unit.worldHeight);
+  const terrain=document.createElement('div');terrain.className='vertical-terrain';terrain.setAttribute('aria-hidden','true');
+  terrain.innerHTML=renderVerticalTerrain(unit);world.prepend(terrain);
+  const navigation=document.createElement('div');navigation.className='vertical-navigation';
+  navigation.innerHTML=`<span class="vertical-direction">↑ RUMBO ${unit.goal==='fortaleza'?'A LA':'AL'} ${unit.goal.toUpperCase()}</span><div><button id="look-goal">Ver ${unit.goal} ↑</button><button id="follow-player" aria-pressed="true">Mi personaje</button><button id="look-start">Inicio ↓</button></div>`;
+  viewport.before(navigation);
+  function setFollow(value) {cameraFollowing=value;$('#follow-player').setAttribute('aria-pressed',value);}
+  $('#look-goal').addEventListener('click',()=>{closeEncounter();setFollow(false);focusCamera([50,0],'smooth');});
+  $('#look-start').addEventListener('click',()=>{closeEncounter();setFollow(false);focusCamera([50,100],'smooth');});
+  $('#follow-player').addEventListener('click',()=>{closeEncounter();setFollow(true);focusCamera(avatarPoint,'smooth');});
+  ['wheel','touchstart','pointerdown','keydown'].forEach(type=>viewport.addEventListener(type,()=>{if(!moving)setFollow(false);},{passive:true}));
+  new ResizeObserver(()=>{closeEncounter();if(cameraFollowing)focusCamera();}).observe(viewport);
+  requestAnimationFrame(()=>focusCamera());
+}
+function renderChapters() {
+  if(!unit.segmented) return;
+  const playerChapter = chapterFor(moving ? state.position+1 : state.position);
+  const page=unit.pages[visibleChapter];
+  $('#map-world').classList.toggle('world-overview',overview);
+  $('#world-overview').hidden=!overview;
+  $('#world-overview').innerHTML=unit.zones.map((zone,i)=>`<button class="zone-marker zone-${i}" data-zone="${i}" ${!zone.count||moving?'disabled':''}><img src="${zone.image}" alt=""/><span><small>ZONA ${i+1}</small><strong>${zone.name}</strong><em>${zone.count?`${zone.count} desafíos · ${zone.pageCount} ${zone.pageCount===1?'página':'páginas'}`:'Sin desafíos con esta cantidad'}</em><b>${zone.count?'Explorar zona →':'Zona sin actividades'}</b></span></button>`).join('');
+  $('#chapter-nav').hidden=false;
+  $('#chapter-nav').innerHTML=unit.chapters.map((name,i)=> {
+    const p=unit.pages[i],size=p.end-p.start+1;
+    const solved=state.completed.filter(id=>id<=mainCount&&chapterFor(id)===i).length;
+    return `<button data-chapter="${i}" ${moving?'disabled':''} aria-pressed="${!overview&&visibleChapter===i}"><span class="chapter-number">${String(p.zone+1).padStart(2,'0')}</span><span><strong>${name}</strong><small>${p.start}–${p.end} · ${solved}/${size} resueltos${playerChapter===i?' · Estás aquí':''}</small></span><span class="chapter-arrow">${solved===size?'✓':'→'}</span></button>`;
+  }).join('');
+  $('#chapter-context').hidden=false;
+  $('#chapter-context').innerHTML=`<span><b>${overview?'VISTA GENERAL':`ZONA ${page.zone+1} · PÁGINA ${page.part}`}</b> · ${overview?`${mainCount} principales + 2 de apoyo`:`Desafíos ${page.start}–${page.end}`}</span><div><button id="show-overview" ${overview?'hidden':''}>Mapa general</button><button id="back-to-player" ${!overview&&visibleChapter===playerChapter?'hidden':''}>Ir a mi desafío ↩</button></div>`;
+  $('#back-to-player').addEventListener('click',()=>{overview=false;visibleChapter=playerChapter;selected=state.position||1;render();});
+  $('#show-overview').addEventListener('click',()=>{overview=true;render();});
+  $('#explorer').style.visibility=!overview&&visibleChapter===playerChapter?'visible':'hidden';
+  $('.map-subtitle').textContent=overview?'VISTA GENERAL DEL MUNDO':unit.chapters[visibleChapter].toUpperCase();
+  const worldImage=$('.world-image');
+  const nextImage=overview?unit.generalImage:unit.chapterImages[visibleChapter];
+  if(!worldImage.src.endsWith(nextImage)) {
+    worldImage.src=nextImage;
+  }
+  worldImage.alt=overview?'Vista general del mundo desértico. Elige una de sus tres zonas.':`Zona ${page.zone+1}: ${unit.chapters[visibleChapter]}, mapa pixel art del desierto.`;
+}
+$('#world-overview').addEventListener('click',event=>{
+  const zone=event.target.closest('[data-zone]');
+  if(!zone||moving)return;
+  overview=false;visibleChapter=unit.zones[Number(zone.dataset.zone)].firstPage;selected=unit.pages[visibleChapter].start;render();
+});
+$('#chapter-nav').addEventListener('click',event=>{
+  const button=event.target.closest('[data-chapter]');
+  if(!button||moving) return;
+  overview=false;
+  visibleChapter=Number(button.dataset.chapter);
+  selected=visibleChapter===chapterFor(state.position)?state.position||1:unit.pages[visibleChapter].start;
+  render();
+});
 function reactNode(id, reaction='hit') {
   const node = $(`[data-id="${id}"]`);
   if (!node) return;
@@ -77,6 +142,7 @@ function reactNode(id, reaction='hit') {
 }
 function drawRoute() {
   const destination = moving ? state.position + 1 : Math.max(1,state.position);
+  if(unit.segmented && chapterFor(destination)!==visibleChapter) { $('#route-layer').innerHTML=''; return; }
   const d = ROADS[destination].map(([x,y],i) => `${i?'L':'M'}${x},${y}`).join(' ');
   $('#route-layer').innerHTML = `<path class="route-bed" d="${d}"/><path class="route-light" d="${d}"/>`;
   $('#route-layer').classList.toggle('is-walking',moving);
@@ -101,18 +167,19 @@ function showEncounter(c, focus=false) {
   panel.hidden = false;
   const mapHeight = $('#map-world').clientHeight;
   const nodeTop = c.y / 100 * mapHeight;
-  const aboveTop = nodeTop - mapHeight*.09 - panel.offsetHeight;
-  const below = aboveTop < 8;
-  const preferredTop = below ? nodeTop + mapHeight*.05 : aboveTop;
+  const viewportTop=unit.vertical?$('#map-viewport').scrollTop:0;
+  const aboveTop = nodeTop - (unit.vertical?65:mapHeight*.09) - panel.offsetHeight;
+  const below = aboveTop < viewportTop+8;
+  const preferredTop = below ? nodeTop + (unit.vertical?25:mapHeight*.05) : aboveTop;
+  const bottomLimit=unit.vertical?Math.min(mapHeight,viewportTop+$('#map-viewport').clientHeight):mapHeight;
   panel.classList.toggle('below',below);
-  panel.style.top = `${Math.max(8,Math.min(mapHeight-panel.offsetHeight-8,preferredTop))}px`;
+  panel.style.top = `${Math.max(viewportTop+8,Math.min(bottomLimit-panel.offsetHeight-8,preferredTop))}px`;
   panel.style.translate = '-50% 0';
   $('#map-world').classList.add('encounter-open');
   $('.encounter-close').addEventListener('click', () => { closeEncounter(); $(`[data-id="${c.id}"]`).focus({preventScroll:true}); });
   $('.encounter-action').addEventListener('click', async () => {
     closeEncounter();
     if (walkingNext) return advanceExplorer();
-    if ($('.map-panel').classList.contains('expanded')) await leaveMap();
     startActivity(c);
   });
   if (focus) (locked||past ? $('.encounter-close') : $('.encounter-action')).focus({preventScroll:true});
@@ -160,6 +227,7 @@ function placeExplorer(point) {
   avatarPoint = point;
   $('#explorer').style.left = `${point[0]}%`;
   $('#explorer').style.top = `${point[1]}%`;
+  if(unit.vertical&&moving&&cameraFollowing)focusCamera(point);
 }
 
 async function advanceExplorer() {
@@ -168,13 +236,26 @@ async function advanceExplorer() {
   const destination = state.position + 1;
   moving = true;
   selected = destination;
+  if(unit.vertical){cameraFollowing=true;$('#follow-player').setAttribute('aria-pressed','true');}
+  if(unit.segmented) {
+    overview=false;
+    const crossing=chapterFor(destination)!==chapterFor(state.position);
+    visibleChapter=chapterFor(destination);
+    if(crossing) {
+      $('#chapter-transition').hidden=false;
+      $('#chapter-transition').innerHTML=`<span>${unit.pages[visibleChapter].zone===unit.pages[chapterFor(state.position)].zone?'SIGUIENTE PÁGINA DE LA ZONA':'ZONA COMPLETADA'}</span><strong>${unit.chapters[visibleChapter]}</strong><small>Continuamos con el desafío ${destination}</small>`;
+      await new Promise(resolve=>setTimeout(resolve,1100));
+      $('#chapter-transition').hidden=true;
+      placeExplorer(ROADS[destination][0]);
+    }
+  }
   render();
   $('#explorer').classList.add('walking');
   $('#explorer').dataset.destination = destination;
   $('.explorer-label').textContent = `RUMBO AL DESAFÍO ${destination}`;
   $('.map-hint-text').textContent = `Caminando hacia el desafío ${destination}…`;
-  if (!$('.map-panel').classList.contains('expanded')) $('#map-world').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  const route = measureRoute(ROADS[destination]);
+  if (!$('.map-panel').classList.contains('expanded')) (unit.vertical?$('#map-viewport'):$('#map-world')).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const route = measureRoute(ROADS[destination],unit.worldWidth,unit.worldHeight);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Constant ground speed, including bends. Frame deltas are capped so returning
   // from a background tab continues the walk instead of teleporting to the end.
@@ -214,6 +295,14 @@ function render() {
   $('#hearts').innerHTML = Array.from({ length: 5 }, (_, i) => icon('heart', i < state.lives ? '' : 'empty')).join('');
   $('#hearts').setAttribute('aria-label', `${state.lives} de 5 vidas`);
   $('#xp-count').textContent = state.xp.toLocaleString('es-AR');
+  $('#activity-lives').textContent = `♥ ${state.lives} / 5`;
+  $('#activity-lives').setAttribute('aria-label',`${state.lives} de 5 vidas`);
+  $('#activity-xp').textContent = `${state.xp.toLocaleString('es-AR')} XP`;
+  $('#map-life-count').innerHTML=Array.from({length:5},(_,i)=>icon('heart',i<state.lives?'':'empty')).join('');
+  $('#map-life-count').setAttribute('aria-label',`${state.lives} de 5 vidas`);
+  $('#map-xp-count').textContent=`${state.xp.toLocaleString('es-AR')} XP`;
+  $('#map-hud-progress').textContent=`${state.completed.filter(id=>id<=mainCount).length} / ${mainCount} desafíos`;
+  $('#map-recovery').disabled = moving;
   $('#progress-count').textContent = state.completed.length;
   $('#progress-fill').style.width = `${state.completed.length / totalChallenges * 100}%`;
   $('.progress-track').setAttribute('aria-valuenow', state.completed.length);
@@ -227,7 +316,7 @@ function render() {
   $('#sound-button').setAttribute('aria-label', state.sound ? 'Desactivar efectos de sonido' : 'Activar efectos de sonido');
   $('#sound-button').title = $('#sound-button').getAttribute('aria-label');
   $('.sound-slash').hidden = state.sound;
-  $('#map-nodes').innerHTML = challenges.map(c => {
+  $('#map-nodes').innerHTML = challenges.filter(c=>!unit.segmented||c.optional||c.chapter===visibleChapter).map(c => {
     const status = getStatus(c);
     const available = status==='available';
     return `<button class="map-node ${status} ${!c.optional && c.id === state.position && !moving ? 'player-here' : ''} ${selected === c.id ? 'selected' : ''}" style="--x:${c.x};--y:${c.y}" data-id="${c.id}" aria-label="Desafío ${c.id}: ${c.title}. ${statusLabels[status]}" aria-pressed="${selected === c.id}" aria-controls="encounter"><span class="object-ground" aria-hidden="true"></span>${nodeArt(unit.theme,c,status,mainCount)}<span class="node-sign" aria-hidden="true">${c.recovery?'♥':c.optional?'★':String(c.id).padStart(2,'0')}</span>${available&&!moving?`<span class="node-invitation" aria-hidden="true">${nodeVerb(unit.theme,status)}</span>`:''}</button>`;
@@ -240,6 +329,9 @@ function render() {
   }
   renderDetail();
   drawRoute();
+  renderChapters();
+  if(unit.segmented && visibleChapter!==chapterFor(moving?state.position+1:state.position)) $('.map-hint-text').textContent='Explorando otro tramo · Tu personaje conserva su posición';
+  if(overview) $('.map-hint-text').textContent='Un mismo mundo · Elige una zona para ver sus desafíos';
 }
 function renderDetail() {
   const c = challenges.find(c => c.id === selected);
@@ -273,8 +365,14 @@ $('#map-nodes').addEventListener('click', async event => {
   reactNode(c.id,isLocked(c)?'denied':'hit');
   showEncounter(c,true);
 });
-$('#find-life').addEventListener('click', () => { if (moving) return; selected = recoveryId; render(); $('#challenge-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('#start-challenge').focus({ preventScroll: true }); });
+$('#find-life').addEventListener('click', () => { if (moving) return; selected = recoveryId; render(); if(unit.vertical){cameraFollowing=false;$('#follow-player').setAttribute('aria-pressed','false');const c=challenges.find(c=>c.recovery);focusCamera([c.x,c.y],'smooth');} else $('#challenge-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); $('#start-challenge').focus({ preventScroll: true }); });
 $('#sound-button').addEventListener('click', () => { state.sound = !state.sound; persist(); render(); playTone(); });
+function openRecovery() {
+  if(moving)return;
+  if($('#activity-dialog').open){$('#activity-dialog').close('recovery');return;}
+  selected=recoveryId;render();startActivity(challenges.find(c=>c.recovery));
+}
+$('#map-recovery').addEventListener('click',openRecovery);
 function setMapExpanded(expanded) {
   closeEncounter();
   $('.map-panel').classList.toggle('expanded', expanded);
@@ -306,6 +404,8 @@ $('#exit-map').addEventListener('click', leaveMap);
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) setMapExpanded(false); });
 document.addEventListener('keydown', event => {
   if(event.key!=='Escape') return;
+  // Let the modal handle Escape without dismissing the map underneath it.
+  if(document.querySelector('dialog[open]')) return;
   if(!$('#encounter').hidden) { closeEncounter(); $(`[data-id="${selected}"]`).focus({preventScroll:true}); }
   else if($('.map-panel').classList.contains('expanded')) leaveMap();
 });
@@ -313,31 +413,17 @@ document.querySelectorAll('dialog').forEach(dialog => {
   dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
 });
-const questions = {
-  1: ['¿Qué es un programa?', ['Una lista de instrucciones que una computadora puede ejecutar', 'Solo una imagen en la pantalla', 'Una pieza física de la computadora'], 0, 'Un programa es un conjunto de instrucciones que indica a la computadora qué hacer.'],
-  2: ['Para resolver un problema complejo, conviene…', ['Escribir código sin planificar', 'Dividirlo en problemas más pequeños', 'Evitar comprobar el resultado'], 1, 'Dividir un problema en partes pequeñas facilita entenderlo y resolverlo.'],
-  3: ['¿Qué caracteriza a un algoritmo?', ['Pasos ordenados para resolver un problema', 'Instrucciones elegidas al azar', 'Una única operación matemática'], 0, 'Un algoritmo define pasos ordenados y precisos para llegar a un resultado.'],
-  4: ['¿Para qué sirve una variable?', ['Para decorar un programa', 'Para almacenar un dato con un nombre', 'Para cerrar una aplicación'], 1, 'Una variable permite guardar un valor y utilizarlo mediante su nombre.'],
-  5: ['¿Cuál de estos valores es booleano?', ['"desierto"', '42', 'verdadero'], 2, 'Un booleano representa uno de dos valores: verdadero o falso.'],
-  6: ['Si tienes 3 monedas y consigues 4 más, ¿qué expresión calcula el total?', ['3 + 4', '3 > 4', '3 − 4'], 0, 'El operador + suma ambos valores. El total es 7 monedas.'],
-  7: ['¿Qué resultado tiene la comparación 5 > 3?', ['Falso', 'Verdadero', '5'], 1, '5 es mayor que 3, por lo tanto la comparación produce verdadero.'],
-  8: ['La puerta se abre si monedas ≥ 10. Tienes 12 monedas. ¿Qué sucede?', ['La puerta permanece cerrada', 'La puerta se abre', 'Pierdes todas tus monedas'], 1, '12 es mayor o igual que 10. La condición se cumple y se ejecuta la acción: abrir la puerta.'],
-  9: ['Debes recoger una moneda 5 veces. ¿Qué estructura te ayuda a repetir la acción?', ['Una variable de texto', 'Un comentario', 'Un bucle'], 2, 'Un bucle repite un conjunto de instrucciones; aquí, recoger una moneda cinco veces.'],
-  10: ['Tu algoritmo inicia con 0 monedas y suma 2 en cada una de 5 vueltas. Si el castillo abre con 10 monedas, ¿puedes entrar?', ['Sí, terminas con 10 monedas', 'No, terminas con 5 monedas', 'No, terminas con 2 monedas'], 0, 'El bucle suma 2 cinco veces: 2 × 5 = 10. La condición monedas ≥ 10 es verdadera. ¡El castillo se abre!'],
-  11: ['El camino sigue la secuencia 2, 4, 8, 16… ¿Qué número viene después?', ['18', '24', '32'], 2, 'Cada número es el doble del anterior: 16 × 2 = 32. ¡Encontraste el patrón!'],
-  12: ['Repaso rápido: ¿qué estructura permite elegir un camino según una condición?', ['Un condicional (si / si no)', 'Un color de fondo', 'Un comentario'], 0, 'Un condicional evalúa una condición y permite ejecutar instrucciones diferentes según el resultado.'],
-};
 function startActivity(c) {
   if (moving || isLocked(c) || (!c.optional && c.id !== state.position)) return;
   closeEncounter();
-  if (state.lives === 0 && !c.recovery && !state.completed.includes(c.id)) { toast('Necesitas una vida. Completa el desafío de recuperación.'); selected = recoveryId; render(); return; }
-  const [question, options, correct, explanation] = (unit.questions || questions)[c.id];
+  if (state.lives === 0 && !c.recovery && !state.completed.includes(c.id)) { openRecovery(); return; }
+  const [question, options, correct, explanation] = unit.questions[c.id];
   let answer = null;
   let resolved = false;
   let attempted = false;
   const previouslyCompleted = state.completed.includes(c.id);
   const review = previouslyCompleted && !(c.recovery && state.lives < 5);
-  $('#activity-content').innerHTML = `<span class="modal-kicker">${review ? 'MODO REPASO' : `DESAFÍO ${String(c.id).padStart(2, '0')}`} · ACTIVIDAD DE DEMOSTRACIÓN</span><h2>${c.title}</h2><p>${question}</p><div class="answer-list" role="group" aria-label="Opciones de respuesta">${options.map((option, i) => `<button class="answer-option" data-answer="${i}" aria-pressed="false">${String.fromCharCode(65 + i)}. &nbsp;${option}</button>`).join('')}</div><div id="answer-feedback" aria-live="polite"></div><button id="check-answer" class="primary-button" disabled>Comprobar respuesta →</button><p class="button-caption">${review ? 'Este repaso no modifica tus recompensas.' : c.recovery ? 'Este desafío no consume vidas.' : 'Una respuesta incorrecta consume 1 vida por intento de actividad.'}</p>`;
+  $('#activity-content').innerHTML = `<span class="modal-kicker">${review ? 'MODO REPASO' : `DESAFÍO ${String(c.id).padStart(2, '0')}`} · ACTIVIDAD</span><h2>${c.title}</h2><p>${question}</p><div class="answer-list" role="group" aria-label="Opciones de respuesta">${options.map((option, i) => `<button class="answer-option" data-answer="${i}" aria-pressed="false">${String.fromCharCode(65 + i)}. &nbsp;${option}</button>`).join('')}</div><div id="answer-feedback" aria-live="polite"></div><button id="check-answer" class="primary-button" disabled>Comprobar respuesta →</button><p class="button-caption">${review ? 'Este repaso no modifica tus recompensas.' : c.recovery ? 'Este desafío no consume vidas.' : 'Una respuesta incorrecta consume 1 vida por intento de actividad.'}</p>`;
   $('#activity-content').querySelectorAll('[data-answer]').forEach(button => button.addEventListener('click', () => {
     if (resolved) return;
     answer = Number(button.dataset.answer);
@@ -352,7 +438,7 @@ function startActivity(c) {
       $('#answer-feedback').innerHTML = `<div class="answer-feedback error">Todavía no. ${state.lives === 0 && !c.recovery && !review ? 'Te quedaste sin vidas. Completa el repaso de recuperación para continuar.' : 'Vuelve a leer la consigna y prueba otra respuesta.'}</div>`;
       if (state.lives === 0 && !c.recovery && !review) {
         resolved = true; $('#check-answer').textContent = 'Ir a recuperar una vida →';
-        $('#check-answer').addEventListener('click', () => { $('#activity-dialog').close(); selected = recoveryId; render(); }, { once: true });
+        $('#check-answer').addEventListener('click', openRecovery, { once: true });
       }
       return;
     }
@@ -365,6 +451,7 @@ function startActivity(c) {
     $('#back-map').addEventListener('click', () => { $('#activity-dialog').close(); if (!review) rewardEffect(c); });
     $('#back-map').focus();
   });
+  $('#activity-dialog').returnValue='';
   $('#activity-dialog').showModal();
 }
 $('#course-button').addEventListener('click', () => {
@@ -372,12 +459,13 @@ $('#course-button').addEventListener('click', () => {
   $('#continue-unit').addEventListener('click', () => $('#info-dialog').close()); $('#info-dialog').showModal();
 });
 $('#profile-button').addEventListener('click', () => {
-  $('#info-content').innerHTML = `<span class="modal-kicker">TU PERFIL DE EXPLORADOR</span><h2>¡La aventura sigue!</h2><p>Estás explorando ${unit.title.toLowerCase()}, un desafío a la vez.</p><div class="profile-data"><div><strong>${state.lives}/5</strong><span>vidas</span></div><div><strong>7</strong><span>días de racha</span></div><div><strong>${state.xp.toLocaleString('es-AR')}</strong><span>XP de esta unidad</span></div></div><p>Perfil de demostración. Cada unidad conserva su avance y sus recompensas en este navegador.</p>`;
+  $('#info-content').innerHTML = `<span class="modal-kicker">TU PERFIL DE EXPLORADOR</span><h2>¡La aventura sigue!</h2><p>Estás explorando ${unit.title.toLowerCase()}, un desafío a la vez.</p><div class="profile-data"><div><strong>${state.lives}/5</strong><span>vidas</span></div><div><strong>7</strong><span>días de racha</span></div><div><strong>${state.xp.toLocaleString('es-AR')}</strong><span>XP de esta unidad</span></div></div><p>Cada unidad conserva su avance y sus recompensas en este navegador.</p>`;
   $('#info-dialog').showModal();
 });
 // Every dismissal of a completed activity (button, close icon, Escape or
 // backdrop) uses the same sequential transition. Selection never moves us.
 $('#activity-dialog').addEventListener('close', () => {
+  if($('#activity-dialog').returnValue==='recovery'){openRecovery();return;}
   if (state.position > 0 && canAdvance(state.position, state.completed)) advanceExplorer();
   else { if (!(selected === recoveryId && state.lives === 0)) selected = state.position || 1; render(); }
 });

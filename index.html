@@ -9,9 +9,11 @@
   <link rel="stylesheet" href="journey.css" />
   <link rel="stylesheet" href="worlds.css" />
   <link rel="stylesheet" href="world-play.css" />
-  <script type="module" src="app.js"></script>
+  <link rel="stylesheet" href="unit-setup.css" />
+  <link rel="stylesheet" href="vertical-world.css" />
+  <script type="module" src="main.js"></script>
 </head>
-<body>
+<body class="booting">
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="icon-heart" viewBox="0 0 24 24"><path d="M3 3h6v3h6V3h6v3h3v9h-3v3h-3v3h-3v3H9v-3H6v-3H3v-3H0V6h3z" fill="currentColor"/><path d="M3 6h6v3H6v3H3z" fill="#fff" opacity=".5"/></symbol>
     <symbol id="icon-bolt" viewBox="0 0 24 24"><path d="M12 0h9l-6 9h6L6 24l3-12H3z" fill="currentColor"/></symbol>
@@ -32,6 +34,7 @@
   <main>
     <nav class="breadcrumbs" aria-label="Ubicación"><button id="course-button">← Mi curso</button><span>/</span><span>Introducción a la programación</span><span>/</span><strong>Unidad 01</strong></nav>
     <nav id="unit-switcher" class="unit-switcher" aria-label="Unidades del curso"></nav>
+    <section id="unit-configuration" class="unit-configuration" aria-label="Configuración de la unidad"></section>
     <section class="unit-heading" aria-labelledby="unit-title">
       <div class="unit-title-block"><div class="world-badge"><span>UNIDAD</span><strong>01</strong></div><div><div class="eyebrow">UN NUEVO MUNDO POR DESCUBRIR</div><h1 id="unit-title">El desierto del conocimiento<span>.</span></h1><p>Fundamentos de programación <span>·</span> Tu aventura comienza con las bases.</p></div></div>
       <div class="unit-progress"><div><span>Tu progreso</span><strong><span id="progress-count">0</span> <span class="muted">/ 12 desafíos</span></strong></div><div class="progress-track" role="progressbar" aria-label="Progreso de la unidad" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0"><div id="progress-fill"></div></div><small id="progress-caption">Tu primer paso te está esperando.</small></div>
@@ -41,11 +44,13 @@
         <button id="exit-map" aria-label="Salir de pantalla completa" title="Salir de pantalla completa (Esc)">×</button>
         <div class="map-toolbar"><div><span class="live-dot"></span><span>MUNDO 01</span><span class="toolbar-divider">/</span><span class="map-subtitle">TIERRAS DEL SOL</span></div><div class="map-tools"><button id="sound-button" aria-label="Activar efectos de sonido" aria-pressed="false" title="Activar efectos de sonido"><span id="sound-icon">♪</span><span class="sound-slash">╱</span></button><button id="expand-button" aria-label="Ampliar mapa" title="Ampliar mapa">⛶</button></div></div>
         <div class="map-world" id="map-world">
+          <div id="chapter-transition" class="chapter-transition" role="status" hidden></div>
           <img class="world-image" src="mapa_desierto_objetos.png" alt="Mundo desértico en pixel art: un camino recorre oasis, pirámides, ruinas y tuberías hasta un castillo final." width="1448" height="1086" />
           <div class="world-shade"></div>
           <div id="world-atmosphere" class="world-atmosphere" aria-hidden="true"></div>
           <svg id="route-layer" class="route-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
           <div id="map-nodes"></div>
+          <div id="world-overview" hidden aria-label="Zonas del mundo"></div>
           <div id="walk-effects" aria-hidden="true"></div>
           <section id="encounter" class="encounter" aria-label="Desafío seleccionado en el mapa" hidden></section>
           <div id="world-effects" aria-hidden="true"></div>
@@ -53,6 +58,11 @@
           <div class="map-hint"><span class="hint-cross">✥</span> <span class="map-hint-text">Comienza tu aventura: salida → desafío 1</span></div>
         </div>
         <div class="map-legend" aria-label="Leyenda del mapa"><span><i class="legend-dot completed">✓</i>Completado</span><span><i class="legend-dot available"></i>Disponible</span><span><i class="legend-dot locked"><svg><use href="#icon-lock"/></svg></i>Bloqueado</span><span><i class="legend-dot bonus">★</i>Bonus</span><span><i class="legend-dot recovery">♥</i>Recuperar vida</span></div>
+        <div id="chapter-context" class="chapter-context" hidden></div>
+        <nav id="chapter-nav" class="chapter-nav" aria-label="Tramos de la unidad" hidden></nav>
+        <section class="fullscreen-support floating-map-hud" aria-label="Estadísticas dentro del mapa"><div class="map-hud-heading"><span>EXPLORADOR · U01</span><span class="hud-online">● EN JUEGO</span></div><div class="map-hud-stats"><div><small>VIDAS</small><span id="map-life-count"></span></div><div><small>RACHA</small><strong>ϟ 7 días</strong></div><div><small>EXPERIENCIA</small><strong id="map-xp-count"></strong></div></div><div class="map-hud-footer"><span id="map-hud-progress"></span><button id="map-recovery">♥ Recuperar vida</button></div></section>
+        <dialog id="activity-dialog" aria-label="Actividad del desafío"><button class="dialog-close" aria-label="Cerrar actividad">×</button><div class="activity-hud"><span>EN JUEGO</span><strong id="activity-lives"></strong><strong id="activity-xp"></strong></div><div id="activity-content"></div></dialog>
+        <div class="toast" id="toast" role="status"></div>
       </section>
       <aside class="detail-column" aria-label="Detalle del desafío">
         <section class="collection-card" aria-label="Colección de la unidad"><span id="collection-icon" class="collectible coin" aria-hidden="true"></span><div><span id="collection-label">Monedas</span><strong id="collection-count">0 / 10</strong><small id="collection-note"></small></div></section>
@@ -63,9 +73,7 @@
     </div>
     <footer class="page-footer"><span><svg><use href="#icon-book"/></svg> PEQUEÑOS PASOS. GRANDES CONQUISTAS.</span><span>Explora. Aprende. Sube de nivel. <span class="footer-star">✦</span></span></footer>
   </main>
-  <dialog id="activity-dialog"><button class="dialog-close" aria-label="Cerrar actividad">×</button><div id="activity-content"></div></dialog>
   <dialog id="info-dialog"><button class="dialog-close" aria-label="Cerrar">×</button><div id="info-content"></div></dialog>
-  <div class="toast" id="toast" role="status"></div>
 </body>
 </html>
 
